@@ -114,28 +114,6 @@ def main() -> None:
         "Upload multiple PDF or image files, extract invoice data with Azure OpenAI, and download results as Excel/CSV."
     )
 
-    with st.expander("Azure OpenAI configuration", expanded=True):
-        azure_endpoint = st.text_input(
-            "Azure OpenAI endpoint",
-            value=os.environ.get("AZURE_OPENAI_ENDPOINT", ""),
-        )
-        api_key = st.text_input(
-            "Azure OpenAI key",
-            value=os.environ.get("AZURE_OPENAI_KEY", ""),
-            type="password",
-        )
-        api_version = st.text_input(
-            "Azure OpenAI API version",
-            value=os.environ.get("AZURE_OPENAI_API_VERSION", ""),
-        )
-        deployment_name = st.text_input(
-            "Deployment name",
-            value=os.environ.get("AZURE_OPENAI_DEPLOYMENT", "gpt-4o-mini"),
-        )
-
-    if not api_key:
-        st.warning("Please provide Azure OpenAI key to use extraction.")
-
     uploaded_files = st.file_uploader(
         "Choose multiple PDF or image files",
         type=["pdf", "png", "jpg", "jpeg"],
@@ -143,9 +121,13 @@ def main() -> None:
     )
 
     if uploaded_files and st.button("Process files"):
-        if not api_key:
-            st.error("Missing API key. Please enter it in the configuration section.")
-            return
+        # if not api_key:
+        #     st.error("Missing API key. Please enter it in the configuration section.")
+        #     return
+        azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+        api_key = os.environ.get("AZURE_OPENAI_KEY", "")
+        api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "")
+        deployment_name = os.environ.get("AZURE_OPENAI_DEPLOYMENT", "gpt-4o-mini")
 
         client = create_openai_client(azure_endpoint, api_key, api_version)
         header_rows = []
