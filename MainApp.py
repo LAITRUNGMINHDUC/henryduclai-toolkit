@@ -1,97 +1,36 @@
-import streamlit as st 
-import pandas as pd 
-import numpy as np 
-import traceback
-import time
-from stqdm import stqdm
-stqdm.pandas()
-import io
+import streamlit as st
 
-st.set_page_config(
-    page_title="D&A Vietnam - HR CV Scanning Tool",
-    page_icon="🎇🍾🎂",
-)
-
-# Define Global variables 
-in_memory_fp = None
-
-###########################################################
-def calculate_candidate_score(keywords_file, answers_file):
-    global in_memory_fp
-    try:
-        df_keywords_dict = pd.read_excel(keywords_file, sheet_name=None)
-        df_answers = pd.read_excel(answers_file)
-        
-        ### Very quick data validation ### 
-        for sheet_name in df_keywords_dict.keys():
-            if sheet_name not in df_answers.columns:
-                st.error("Keywords Sheet name must match with column name of Candidate data")
-                st.stop()
-            else:
-                df_answers[sheet_name] = df_answers[sheet_name].astype(str)
-                df_answers[sheet_name] = df_answers[sheet_name].str.lower()
-        
-        df_answers = df_answers.to_dict('records')
-        ### 
-        for sheet_name in df_keywords_dict.keys():
-            df_keyword = df_keywords_dict[sheet_name] ### Schema: Keyword | Score
-            df_keyword['Keyword'] = df_keyword['Keyword'].str.lower()
-            df_keyword['Length'] = df_keyword['Keyword'].str.len()
-            df_keyword = df_keyword.sort_values(by='Length', ascending=False)
-            df_keyword = df_keyword.to_dict('records')
-
-            for record in stqdm(df_answers, f"Run for {sheet_name}"):
-                time.sleep(0.01)
-
-                answer_str = record[sheet_name]
-                matched_keywords = []
-                matched_score = 0
-
-                for keyword in df_keyword:
-                    if keyword['Keyword'] in answer_str:
-                        matched_score = matched_score + keyword['Score']
-                        matched_keywords.append(keyword['Keyword'])
-                        answer_str = answer_str.replace(keyword['Keyword'], "---")
-                
-                record[f'{sheet_name} Score'] = matched_score
-                record[f'{sheet_name} Keywords'] = ', '.join(matched_keywords)
-        
-        df_answers = pd.DataFrame(df_answers)
-        df_answers['Full Score'] = 0
-        for sheet_name in df_keywords_dict.keys():
-            df_answers['Full Score'] = df_answers['Full Score'] + df_answers[f'{sheet_name} Score']
-        df_answers = df_answers.sort_values(by='Full Score', ascending=False)
-
-        # Write file to Stream and trigger Download Button
-        in_memory_fp = io.BytesIO()
-        df_answers.to_excel(in_memory_fp, index=False)
-        in_memory_fp.seek(0, 0)
-
-        st.write(df_answers)
+from auth import require_auth
 
 
-    except Exception as ex:
-        st.error(str(ex))
-        st.error(traceback.format_exc())
+def main() -> None:
+    st.set_page_config(page_title="Streamlit Multi-Page App", layout="wide")
+    st.title("Streamlit Multi-Page App")
 
-def main_app():
-    st.header("D&A Vietnam - HR CV Scanning Tool")
-    
-    with st.form("Please provide 2 required datasets", clear_on_submit=False):
-        keywords_file = st.file_uploader("Keywords Dataset file")
-        answers_file = st.file_uploader("Candidate Answers file")
-        submitted = st.form_submit_button("Submit")
-        if submitted and keywords_file is not None and answers_file is not None:
-            st.success("Datasets received")
-            calculate_candidate_score(keywords_file, answers_file)
-        else:
-            st.error("You must submit required datasets")
-    
-    if in_memory_fp != None:
-        if st.download_button('Download Result file', 
-                            file_name=f"RESULT D&A HR TOOL - {time.time()}.xlsx", 
-                            data=in_memory_fp):
-            st.success("Thanks for downloading...")
+    st.markdown(
+        "Chào mừng đến với ứng dụng Streamlit đa trang. Sử dụng thanh sidebar để điều hướng giữa các phần của ứng dụng."
+    )
+
+    st.markdown("## Các trang hiện có")
+    st.markdown("- **Invoice Extraction**: Tải lên nhiều file PDF/ảnh, trích xuất dữ liệu hóa đơn, và tải xuống Excel/CSV.")
+    st.markdown("- **Image OCR Converter**: Chuyển ảnh thành văn bản bằng Azure OpenAI cùng tính năng đăng nhập.")
+    st.markdown("- **Google Map Route calculator**: Tải lên bảng địa chỉ Excel và tính quãng đường/duration cùng link bản đồ.")
+    st.markdown("- **Truck Route Optimization**: Tối ưu lộ trình xe dựa trên Google Maps và OR-Tools.")
+    st.markdown("- **Keyword Matching with Score**: Quét CV và tính điểm từ khóa với báo cáo Excel.")
+
+    st.markdown("---")
+    st.markdown("### Điều hướng nhanh")
+    st.markdown(
+        "Nếu bạn đang sử dụng Streamlit, mở sidebar để chuyển sang trang **Invoice Extraction**. "
+        "Hoặc truy cập trực tiếp bằng liên kết:"
+    )
+    st.markdown(
+        "[Go to Invoice Extraction](./?page=Invoice%20Extraction)"
+    )
+
+    st.info("Lưu ý: Sidebar tự động xuất hiện khi có nhiều trang trong thư mục `pages`.")
+
 
 if __name__ == "__main__":
-    main_app()
+    if require_auth():
+        main()

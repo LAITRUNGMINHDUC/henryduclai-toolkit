@@ -1,5 +1,13 @@
+streamlit
+pymupdf
+openai
 pandas
 openpyxl
-numpy
-streamlit
+pillow
+pytesseract
+googlemaps
+requests
 stqdm
+xlsxwriter
+numpy
+ortools
