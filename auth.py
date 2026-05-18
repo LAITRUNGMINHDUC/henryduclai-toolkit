@@ -30,7 +30,7 @@ def sign_in_with_email_and_password(email: str, password: str) -> dict:
 def logout():
     st.session_state.user_info = None
     st.session_state.id_token = None
-    st.experimental_rerun()
+    st.rerun()
 
 
 def require_auth() -> bool:
@@ -51,7 +51,7 @@ def require_auth() -> bool:
                     st.session_state.user_info = email
                     st.session_state.id_token = auth_result.get("idToken")
                     st.success(f"Welcome {st.session_state.user_info} - You are now logged in.")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     error_message = auth_result.get("error", {}).get("message", "Authentication failed")
                     st.error(error_message)
